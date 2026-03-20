@@ -5,10 +5,15 @@ MVP beta nacional de um SaaS desktop web para emissão simplificada de NF-e e NF
 ## Stack
 - Backend: Node.js, NestJS, Prisma, PostgreSQL, Redis, BullMQ, JWT, bcrypt.
 - Frontend: React, Vite, React Router, React Hook Form, Zod, Axios.
-- Infra: Docker Compose, Cloudflare R2 (compatível S3), Focus NFe, padrão nacional NFS-e.
+- Infra: Docker Compose, Cloudflare R2 (compatível S3), Focus NFe, padrão nacional NFS-e, BrasilAPI.
 
 ## Estrutura
 - `apps/api`: API REST modular monolith preparada para escalar.
+  - `modules/auth`, `modules/users`, `modules/empresas`
+  - `modules/onboarding` com BrasilAPI
+  - `modules/focus` para NF-e
+  - `modules/nfse` para NFS-e padrão nacional
+  - `modules/fiscal-engine` para regras MEI
 - `apps/web`: landing page e aplicação desktop web.
 - `infra`: arquivos de infraestrutura e apoio ao deploy.
 
@@ -48,3 +53,9 @@ npm run dev
 - Resolve município da prestação para NFS-e.
 - Executa validações fiscais mínimas do MVP.
 - Inclui observações fiscais padrão para MEI sem destaque de tributos.
+
+## Integrações fiscais do MVP
+- NF-e via gateway Focus NFe com mapeamento, envio, consulta e webhook.
+- NFS-e somente padrão nacional com builders, mappers, assinatura e consulta estruturados.
+- Onboarding por CNPJ via BrasilAPI com razão social, fantasia, município, UF, CNAE e natureza jurídica.
+- Autenticação com access token, refresh token e guard HTTP.

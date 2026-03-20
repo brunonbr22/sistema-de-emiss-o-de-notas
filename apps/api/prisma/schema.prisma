@@ -66,6 +66,8 @@ model Invoice {
   payload       Json
   xmlUrl        String?
   externalRef   String?
+  accessKey     String?
+  protocol      String?
   createdAt     DateTime      @default(now())
   company       Company       @relation(fields: [companyId], references: [id])
 }

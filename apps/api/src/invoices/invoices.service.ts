@@ -3,6 +3,10 @@ import { Prisma } from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
 import { PrismaService } from '../common/prisma.service';
 import { FiscalEngineService } from '../modules/fiscal-engine/fiscal-engine.service';
+import { FocusConsultaService } from '../modules/focus/focus.consulta.service';
+import { FocusService } from '../modules/focus/focus.service';
+import { NfseConsultaService } from '../modules/nfse/nfse-consulta.service';
+import { NfseService } from '../modules/nfse/nfse.service';
 import { QueueService } from '../queues/queue.service';
 import { StorageService } from '../storage/storage.service';
 
@@ -14,6 +18,10 @@ export class InvoicesService {
     private readonly storage: StorageService,
     private readonly queue: QueueService,
     private readonly fiscalEngine: FiscalEngineService,
+    private readonly focusService: FocusService,
+    private readonly focusConsultaService: FocusConsultaService,
+    private readonly nfseService: NfseService,
+    private readonly nfseConsultaService: NfseConsultaService,
   ) {}
 
   simulateFiscalEngine(input: {
@@ -85,33 +93,47 @@ export class InvoicesService {
           itemDescription: input.itemDescription,
           fiscalDecision,
         },
-        status: 'QUEUED',
+        status: 'PROCESSING',
       },
     });
 
-    const xml = [
-      '<nota>',
-      `<id>${invoice.id}</id>`,
-      `<tipo>${fiscalDecision.invoiceType}</tipo>`,
-      `<natureza>${fiscalDecision.naturezaOperacao}</natureza>`,
-      `<cfop>${fiscalDecision.cfop ?? ''}</cfop>`,
-      `<municipioPrestacao>${fiscalDecision.municipioPrestacao ?? ''}</municipioPrestacao>`,
-      `<cliente>${input.customerName}</cliente>`,
-      `<documento>${input.customerTaxId}</documento>`,
-      `<descricao>${input.itemDescription}</descricao>`,
-      `<valor>${input.totalAmount.toFixed(2)}</valor>`,
-      `<observacao>${fiscalDecision.observations.defaultObservation}</observacao>`,
-      '</nota>',
-    ].join('');
+    const gatewayResponse = fiscalDecision.invoiceType === 'NFE'
+      ? await this.focusService.sendInvoice({
+          invoiceId: invoice.id,
+          customerName: input.customerName,
+          customerTaxId: input.customerTaxId,
+          naturezaOperacao: fiscalDecision.naturezaOperacao,
+          cfop: fiscalDecision.cfop,
+          totalAmount: input.totalAmount,
+          itemDescription: input.itemDescription,
+        })
+      : await this.nfseService.sendInvoice({
+          invoiceId: invoice.id,
+          customerName: input.customerName,
+          customerTaxId: input.customerTaxId,
+          serviceCity: fiscalDecision.municipioPrestacao ?? input.companyCity,
+          totalAmount: input.totalAmount,
+          itemDescription: input.itemDescription,
+        });
 
-    const { url } = await this.storage.saveXml(`invoices/${invoice.id}.xml`, xml);
+    const gatewayStatus = fiscalDecision.invoiceType === 'NFE'
+      ? await this.focusConsultaService.getStatus(gatewayResponse.reference)
+      : await this.nfseConsultaService.getStatus(gatewayResponse.reference);
+
+    const { url } = await this.storage.saveXml(`invoices/${invoice.id}.xml`, gatewayStatus.xml);
 
     const updatedInvoice = await this.prisma.invoice.update({
       where: { id: invoice.id },
-      data: { xmlUrl: url, status: 'AUTHORIZED', externalRef: `focus-${invoice.id}` },
+      data: {
+        xmlUrl: url,
+        status: gatewayStatus.status === 'AUTHORIZED' ? 'AUTHORIZED' : 'PROCESSING',
+        externalRef: gatewayResponse.reference,
+        accessKey: gatewayStatus.accessKey,
+        protocol: gatewayStatus.protocol,
+      },
     });
 
-    await this.queue.enqueue('issue-invoice', { invoiceId: invoice.id, type: updatedInvoice.type, fiscalDecision });
+    await this.queue.enqueue('issue-invoice', { invoiceId: invoice.id, type: updatedInvoice.type, fiscalDecision, gatewayResponse });
     await this.audit.log({
       action: 'invoice.created',
       entity: 'invoice',
@@ -121,6 +143,9 @@ export class InvoicesService {
         invoiceType: fiscalDecision.invoiceType,
         naturezaOperacao: fiscalDecision.naturezaOperacao,
         cfop: fiscalDecision.cfop,
+        externalRef: gatewayResponse.reference,
+        accessKey: gatewayStatus.accessKey,
+        protocol: gatewayStatus.protocol,
         xmlUrl: url,
       },
     });
@@ -128,10 +153,12 @@ export class InvoicesService {
     return {
       ...updatedInvoice,
       fiscalDecision,
+      gateway: gatewayResponse.gateway,
       history: [
         { label: 'Motor fiscal definiu a nota', status: 'completed' },
+        { label: 'Gateway fiscal recebeu a nota', status: 'completed' },
         { label: 'XML salvo', status: 'completed' },
-        { label: 'Status autorizado', status: 'completed' },
+        { label: `Status ${updatedInvoice.status.toLowerCase()}`, status: 'completed' },
       ],
       xmlDownloadUrl: url,
     };
