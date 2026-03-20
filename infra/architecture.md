@@ -13,6 +13,7 @@
 - `companies`: empresas, vínculo OWNER e trial.
 - `onboarding`: busca por CNPJ, CNAE, município/UF e criação automática da empresa.
 - `invoices`: wizard, emissão NF-e/NFS-e, XML, status e histórico.
+- `modules/fiscal-engine`: decisões fiscais automáticas de documento, natureza, CFOP, município, validações e observações MEI.
 - `billing`: trial grátis de 14 dias e cálculo de saldo de trial.
 - `audit`: trilha de auditoria.
 - `queues`: filas BullMQ para emissão/consulta.
@@ -27,3 +28,12 @@
 6. O wizard roda em 4 etapas: destinatário, item/operação, revisão e emissão.
 7. A API valida payload, aplica motor fiscal MEI e enfileira a emissão.
 8. XML, status e histórico ficam disponíveis no pós-emissão.
+
+
+## Fiscal engine MEI
+- `cnae-classifier.ts`: classifica atividade principal como comércio, serviço ou mista.
+- `cfop-resolver.ts`: aplica 5102 dentro do estado e 6102 fora do estado.
+- `natureza-resolver.ts`: retorna “Venda de mercadoria” ou “Prestação de serviços”.
+- `municipio-resolver.ts`: resolve município da prestação quando a nota for NFS-e.
+- `mei-rules.ts`: aplica regra de não destacar tributos e validações mínimas do MVP.
+- `fiscal-engine.service.ts`: orquestra as decisões fiscais automáticas usadas pelo wizard e pela emissão.

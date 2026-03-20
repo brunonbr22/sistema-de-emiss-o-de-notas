@@ -19,7 +19,7 @@ MVP beta nacional de um SaaS desktop web para emissão simplificada de NF-e e NF
 - Identificação de razão social, município, UF, CNAE principal e perfil de atividade.
 - Emissão de NF-e e NFS-e padrão nacional.
 - Wizard de emissão em 4 etapas.
-- Motor fiscal inteligente para MEI.
+- Motor fiscal inteligente para MEI com decisão automática de NF-e/NFS-e, natureza, CFOP, município e observações padrão.
 - Armazenamento de XML.
 - Trial grátis de 14 dias.
 - Painel simples do usuário.
@@ -40,3 +40,11 @@ docker compose up -d
 npm install
 npm run dev
 ```
+
+## Motor fiscal inteligente do MVP
+- Decide automaticamente se a emissão será NF-e ou NFS-e.
+- Define natureza da operação para comércio ou serviço.
+- Resolve CFOP padrão 5102/6102 para NF-e.
+- Resolve município da prestação para NFS-e.
+- Executa validações fiscais mínimas do MVP.
+- Inclui observações fiscais padrão para MEI sem destaque de tributos.

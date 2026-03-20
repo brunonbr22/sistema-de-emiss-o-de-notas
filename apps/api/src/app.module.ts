@@ -10,6 +10,7 @@ import { BillingModule } from './billing/billing.module';
 import { StorageModule } from './storage/storage.module';
 import { PrismaService } from './common/prisma.service';
 import { QueueModule } from './queues/queue.module';
+import { FiscalEngineModule } from './modules/fiscal-engine/fiscal-engine.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { QueueModule } from './queues/queue.module';
     BillingModule,
     StorageModule,
     QueueModule,
+    FiscalEngineModule,
   ],
   controllers: [AppController],
   providers: [PrismaService],
