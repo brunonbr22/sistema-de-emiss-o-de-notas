@@ -50,3 +50,10 @@ p { line-height: 1.6; }
   .content, .landing, .centered-page { padding: 20px; }
   .small-card { width: 100%; }
 }
+
+.history-row { display: grid; grid-template-columns: 1.4fr 1fr auto; gap: 16px; align-items: center; padding: 16px 0; border-top: 1px solid var(--border); }
+@media (max-width: 960px) {
+  .history-row { grid-template-columns: 1fr; }
+}
+
+.auth-grid { align-items: start; }

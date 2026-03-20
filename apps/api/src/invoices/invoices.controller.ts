@@ -7,6 +7,8 @@ const createInvoiceSchema = z.object({
   type: z.enum(['NFE', 'NFSE']),
   customerName: z.string(),
   customerTaxId: z.string(),
+  operationType: z.enum(['COMMERCE', 'SERVICE']),
+  itemDescription: z.string(),
   serviceCity: z.string().optional(),
   totalAmount: z.number().positive(),
   payload: z.record(z.any()),

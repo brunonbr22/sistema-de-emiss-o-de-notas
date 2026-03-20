@@ -15,14 +15,23 @@ MVP beta nacional de um SaaS desktop web para emissão simplificada de NF-e e NF
 ## MVP incluído
 - Cadastro/login.
 - Multiempresa.
-- Onboarding por CNPJ.
+- Onboarding por CNPJ com criação automática da empresa.
+- Identificação de razão social, município, UF, CNAE principal e perfil de atividade.
 - Emissão de NF-e e NFS-e padrão nacional.
-- Wizard de emissão em etapas.
+- Wizard de emissão em 4 etapas.
 - Motor fiscal inteligente para MEI.
 - Armazenamento de XML.
 - Trial grátis de 14 dias.
 - Painel simples do usuário.
+- Pós-emissão com status, download de XML e histórico.
 - Landing page comercial.
+
+## Fluxo principal do usuário
+1. Cadastro da conta com nome, e-mail e senha.
+2. Onboarding por CNPJ: consulta dados, cria empresa, vincula OWNER e ativa trial.
+3. Dashboard com boas-vindas, botão principal de emissão e trial restante.
+4. Wizard com cliente, item/operação, revisão e emissão.
+5. Pós-emissão com status, XML e histórico.
 
 ## Subir localmente
 ```bash
