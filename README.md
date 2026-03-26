@@ -46,6 +46,26 @@ npm install
 npm run dev
 ```
 
+## Como visualizar o projeto (modo local)
+1. Execute o script de preview:
+   ```bash
+   ./scripts/preview.sh
+   ```
+2. Acesse:
+   - Frontend: `http://localhost:5173`
+   - API health: `http://localhost:3000/api/health`
+
+### Alternativa manual
+```bash
+cp .env.example .env
+docker compose up -d postgres redis
+npm install
+npm run dev
+```
+
+### Observação
+Se houver bloqueio de rede no ambiente (ex.: erro 403 no npm registry), rode localmente na sua máquina com internet liberada para baixar dependências.
+
 ## Motor fiscal inteligente do MVP
 - Decide automaticamente se a emissão será NF-e ou NFS-e.
 - Define natureza da operação para comércio ou serviço.
