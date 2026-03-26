@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum InvoiceType {
+  NFE
+  NFSE
+}
+
+enum InvoiceStatus {
+  DRAFT
+  QUEUED
+  PROCESSING
+  AUTHORIZED
+  REJECTED
+}
+
+model User {
+  id           String        @id @default(cuid())
+  name         String
+  email        String        @unique
+  passwordHash String
+  createdAt    DateTime      @default(now())
+  memberships  Membership[]
+  audits       AuditLog[]
+}
+
+model Company {
+  id             String        @id @default(cuid())
+  legalName      String
+  tradeName      String?
+  cnpj           String        @unique
+  taxRegime      String
+  mei            Boolean       @default(true)
+  trialEndsAt    DateTime
+  createdAt      DateTime      @default(now())
+  memberships    Membership[]
+  invoices       Invoice[]
+}
+
+model Membership {
+  id        String   @id @default(cuid())
+  role      String
+  userId    String
+  companyId String
+  user      User     @relation(fields: [userId], references: [id])
+  company   Company  @relation(fields: [companyId], references: [id])
+
+  @@unique([userId, companyId])
+}
+
+model Invoice {
+  id            String        @id @default(cuid())
+  companyId     String
+  type          InvoiceType
+  status        InvoiceStatus @default(DRAFT)
+  customerName  String
+  customerTaxId String
+  serviceCity   String?
+  totalAmount   Decimal       @db.Decimal(10,2)
+  payload       Json
+  xmlUrl        String?
+  externalRef   String?
+  accessKey     String?
+  protocol      String?
+  createdAt     DateTime      @default(now())
+  company       Company       @relation(fields: [companyId], references: [id])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  action    String
+  entity    String
+  entityId  String
+  metadata  Json
+  createdAt DateTime @default(now())
+  actor     User?    @relation(fields: [actorId], references: [id])
+}
