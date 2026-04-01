@@ -1,61 +1,119 @@
-# Sistema emitir nota mais simples do Brasil
+# Financeiro MEI Simples
 
-MVP beta nacional de um SaaS desktop web para emissão simplificada de NF-e e NFS-e com foco em MEI.
+Fase 1 (fundação): estrutura completa de projeto para um sistema web simples de controle financeiro para MEI.
+
+## Objetivo desta entrega
+
+Esta versão foca na **base sólida** do projeto:
+
+- Estrutura de pastas backend/frontend
+- Arquitetura de módulos
+- Schema PostgreSQL
+- Arquivos base para API e interface
+- Rotas iniciais de autenticação e financeiro
+
+> Sem integrações externas profundas nesta etapa.
 
 ## Stack
-- Backend: Node.js, NestJS, Prisma, PostgreSQL, Redis, BullMQ, JWT, bcrypt.
-- Frontend: React, Vite, React Router, React Hook Form, Zod, Axios.
-- Infra: Docker Compose, Cloudflare R2 (compatível S3), Focus NFe, padrão nacional NFS-e, BrasilAPI.
 
-## Estrutura
-- `apps/api`: API REST modular monolith preparada para escalar.
-  - `modules/auth`, `modules/users`, `modules/empresas`
-  - `modules/onboarding` com BrasilAPI
-  - `modules/focus` para NF-e
-  - `modules/nfse` para NFS-e padrão nacional
-  - `modules/fiscal-engine` para regras MEI
-- `apps/web`: landing page e aplicação desktop web.
-- `infra`: arquivos de infraestrutura e apoio ao deploy.
+- **Frontend:** React + Vite + CSS puro (mobile-first)
+- **Backend:** Node.js + Express
+- **Banco:** PostgreSQL
+- **Auth:** JWT + bcryptjs
 
-## MVP incluído
-- Cadastro/login.
-- Multiempresa.
-- Onboarding por CNPJ com criação automática da empresa.
-- Identificação de razão social, município, UF, CNAE principal e perfil de atividade.
-- Emissão de NF-e e NFS-e padrão nacional.
-- Wizard de emissão em 4 etapas.
-- Motor fiscal inteligente para MEI com decisão automática de NF-e/NFS-e, natureza, CFOP, município e observações padrão.
-- Armazenamento de XML.
-- Trial grátis de 14 dias.
-- Painel simples do usuário.
-- Pós-emissão com status, download de XML e histórico.
-- Landing page comercial.
+## Estrutura de pastas
 
-## Fluxo principal do usuário
-1. Cadastro da conta com nome, e-mail e senha.
-2. Onboarding por CNPJ: consulta dados, cria empresa, vincula OWNER e ativa trial.
-3. Dashboard com boas-vindas, botão principal de emissão e trial restante.
-4. Wizard com cliente, item/operação, revisão e emissão.
-5. Pós-emissão com status, XML e histórico.
-
-## Subir localmente
 ```bash
-cp .env.example .env
-docker compose up -d
+.
+├── backend/
+│   ├── sql/
+│   │   └── schema.sql
+│   ├── src/
+│   │   ├── app.js
+│   │   ├── server.js
+│   │   ├── config/
+│   │   │   └── env.js
+│   │   ├── database/
+│   │   │   └── pool.js
+│   │   ├── middlewares/
+│   │   │   └── auth.middleware.js
+│   │   └── modules/
+│   │       ├── auth/
+│   │       │   ├── auth.controller.js
+│   │       │   ├── auth.routes.js
+│   │       │   └── auth.service.js
+│   │       └── finance/
+│   │           ├── finance.controller.js
+│   │           ├── finance.routes.js
+│   │           └── finance.service.js
+│   ├── .env.example
+│   └── package.json
+├── frontend/
+│   ├── index.html
+│   ├── package.json
+│   ├── vite.config.js
+│   └── src/
+│       ├── main.jsx
+│       ├── app/App.jsx
+│       ├── features/
+│       │   ├── auth/AuthPage.jsx
+│       │   ├── dashboard/DashboardPage.jsx
+│       │   └── movements/MovementsPage.jsx
+│       ├── services/api.js
+│       └── styles/base.css
+├── package.json
+└── README.md
+```
+
+## Banco de dados (schema)
+
+Arquivo: `backend/sql/schema.sql`
+
+- Tabela `users`
+- Tabela `movements`
+- Constraints para tipo/valor
+- Índice por usuário e data
+
+## Como rodar local
+
+### 1) Criar banco
+
+```sql
+CREATE DATABASE financeiro_mei;
+```
+
+### 2) Aplicar schema
+
+```bash
+psql -U postgres -d financeiro_mei -f backend/sql/schema.sql
+```
+
+### 3) Configurar ambiente
+
+```bash
+cp backend/.env.example backend/.env
+```
+
+### 4) Instalar dependências
+
+```bash
 npm install
+npm --prefix backend install
+npm --prefix frontend install
+```
+
+### 5) Executar
+
+```bash
 npm run dev
 ```
 
-## Motor fiscal inteligente do MVP
-- Decide automaticamente se a emissão será NF-e ou NFS-e.
-- Define natureza da operação para comércio ou serviço.
-- Resolve CFOP padrão 5102/6102 para NF-e.
-- Resolve município da prestação para NFS-e.
-- Executa validações fiscais mínimas do MVP.
-- Inclui observações fiscais padrão para MEI sem destaque de tributos.
+- API: `http://localhost:3001`
+- Web: `http://localhost:5173`
 
-## Integrações fiscais do MVP
-- NF-e via gateway Focus NFe com mapeamento, envio, consulta e webhook.
-- NFS-e somente padrão nacional com builders, mappers, assinatura e consulta estruturados.
-- Onboarding por CNPJ via BrasilAPI com razão social, fantasia, município, UF, CNAE e natureza jurídica.
-- Autenticação com access token, refresh token e guard HTTP.
+## Próximos passos (Fase 2)
+
+- Persistir token no frontend
+- Consumir dashboard real na interface
+- Fluxo completo de movimentações (listar e salvar)
+- Ajustes de UX para uso 100% mobile
