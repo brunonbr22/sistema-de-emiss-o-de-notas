@@ -1,0 +1,176 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Usuário ──────────────────────────────────────────────────
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  companies CompanyMember[]
+  sessions  Session[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+// ─── Empresa ──────────────────────────────────────────────────
+model Company {
+  id        String   @id @default(uuid())
+  cnpj      String   @unique
+  name      String
+  tradeName String?
+  email     String?
+  phone     String?
+
+  // Endereço
+  street       String?
+  number       String?
+  complement   String?
+  neighborhood String?
+  city         String?
+  state        String?
+  zipCode      String?
+  ibgeCode     String?
+
+  // Regime/tipo
+  regime    TaxRegime @default(MEI)
+  situation String?
+
+  // Certificado digital (criptografado)
+  certBase64   String?
+  certPassword String?
+  certExpiry   DateTime?
+
+  // Integração Focus NFe (token individual da empresa)
+  focusNfeToken String?
+
+  // Trial
+  trialEndsAt DateTime?
+  planId      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members  CompanyMember[]
+  invoices Invoice[]
+  nfseConfigs NfseConfig[]
+
+  @@map("companies")
+}
+
+model CompanyMember {
+  id        String      @id @default(uuid())
+  userId    String
+  companyId String
+  role      MemberRole  @default(OWNER)
+  createdAt DateTime    @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, companyId])
+  @@map("company_members")
+}
+
+// ─── Nota Fiscal ──────────────────────────────────────────────
+model Invoice {
+  id        String        @id @default(uuid())
+  companyId String
+  type      InvoiceType
+  status    InvoiceStatus @default(DRAFT)
+  number    String?
+
+  // Tomador
+  takerDocument String
+  takerName     String
+  takerEmail    String?
+
+  // Valores
+  grossValue   Decimal @db.Decimal(15, 2)
+  deductions   Decimal @default(0) @db.Decimal(15, 2)
+  netValue     Decimal @db.Decimal(15, 2)
+  issRate      Decimal @default(0) @db.Decimal(5, 4)
+  issValue     Decimal @default(0) @db.Decimal(15, 2)
+
+  // Serviço
+  serviceCode  String?
+  serviceDesc  String
+  cnaeCode     String?
+
+  // Referências externas (Focus NFe / prefeitura)
+  externalId   String?
+  externalRef  String?
+  accessKey    String?
+
+  // XML armazenado
+  xmlPath      String?
+
+  issuedAt  DateTime?
+  canceledAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@map("invoices")
+}
+
+// ─── Configuração NFS-e por município ─────────────────────────
+model NfseConfig {
+  id        String @id @default(uuid())
+  companyId String
+  ibgeCode  String
+  provider  String
+  config    Json
+
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@unique([companyId, ibgeCode])
+  @@map("nfse_configs")
+}
+
+// ─── Enums ────────────────────────────────────────────────────
+enum TaxRegime {
+  MEI
+  SIMPLES_NACIONAL
+}
+
+enum MemberRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum InvoiceType {
+  NFE
+  NFSE
+}
+
+enum InvoiceStatus {
+  DRAFT
+  PENDING
+  ISSUED
+  REJECTED
+  CANCELED
+}
