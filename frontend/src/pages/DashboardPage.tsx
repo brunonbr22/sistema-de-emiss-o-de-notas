@@ -357,7 +357,3 @@ function TrialBanner({ endsAt }: { endsAt: string | null }) {
     </div>
   );
 }
-
-function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString('pt-BR');
-}
